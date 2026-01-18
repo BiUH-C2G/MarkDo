@@ -169,6 +169,7 @@ compose.desktop {
             buildTypes.release{
                 proguard {
                     configurationFiles.from(project.file("proguard-rules.pro"))
+                    // FIXME：666安装了启动不了JVM
                 }
             }
         }

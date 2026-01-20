@@ -76,7 +76,7 @@ fun CourseDetailPage(duty: CourseDetailDuty) {
 }
 
 @Composable
-fun SectionView(section: SectionLike, duty: CourseDetailDuty): Unit = Column(Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.large).padding(16.dp), Arrangement.spacedBy(16.dp)) {
+fun SectionView(section: SectionLike, duty: CourseDetailDuty): Unit = Column(Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.large).padding(vertical = 16.dp)) {
     SectionHeader(section)
 
     section.modules.forEach { module -> ModuleItemDispatcher(module, duty) }
@@ -101,9 +101,11 @@ fun ModuleItemDispatcher(module: CourseModule, duty: CourseDetailDuty) = when (m
 
 @Composable
 fun SectionHeader(section: SectionLike) = Column(Modifier.fillMaxWidth(), Arrangement.spacedBy(16.dp)) {
-    Text(section.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+    val modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)
 
-    section.summary?.let { if (it.isNotBlank()) Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+    Text(section.name, modifier, MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge)
+
+    section.summary?.let { if (it.isNotBlank()) Text(it, modifier, MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium) }
 }
 
 @Composable
@@ -127,7 +129,7 @@ fun LabelView(label: CourseModule.Label) {
     // TODO：简单处理 HTML，以后用库
     val plainText = remember(label.contentHtml) { label.contentHtml.replace(Regex("<[^>]*>"), "").replace("&nbsp;", " ").trim() }
 
-    if (plainText.isNotEmpty()) Text(plainText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+    if (plainText.isNotEmpty()) Text(plainText, Modifier.padding(horizontal = 16.dp), MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyMedium)
 }
 
 @Composable

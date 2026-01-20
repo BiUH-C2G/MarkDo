@@ -61,9 +61,7 @@ class AppDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent {
             appPrefRepo.setUsername("")
             appPrefRepo.setPassword("")
 
-            mainDispatcherLaunch {
-                navigation.replaceAll(AppNavis.Login)
-            }
+            mainDispatcherLaunch { navigation.replaceAll(AppNavis.Login) }
         }
     }
 }

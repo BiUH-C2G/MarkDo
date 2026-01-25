@@ -18,7 +18,7 @@ sealed class AppNavis {
 @Serializable
 sealed class MainNavis {
     @Serializable
-    data object Grades : MainNavis()
+    data object Dashboard : MainNavis()
 
     @Serializable
     data object Course : MainNavis()
@@ -34,4 +34,16 @@ sealed class CourseNavis {
 
     @Serializable
     data class CourseDetail(val courseId: Int) : CourseNavis()
+}
+
+@Serializable
+sealed class MyNavis {
+    @Serializable
+    data object Overview : MyNavis()
+
+    @Serializable
+    data object Settings : MyNavis()
+
+    @Serializable
+    data object Grades : MyNavis()
 }

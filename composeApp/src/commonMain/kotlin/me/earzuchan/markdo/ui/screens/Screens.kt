@@ -13,18 +13,28 @@ import com.arkivanov.decompose.FaultyDecomposeApi
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import me.earzuchan.markdo.duties.CourseDuty
-import me.earzuchan.markdo.duties.GradesDuty
+import me.earzuchan.markdo.duties.DashboardDuty
 import me.earzuchan.markdo.duties.LoginDuty
 import me.earzuchan.markdo.duties.MainDuty
 import me.earzuchan.markdo.duties.MyDuty
 import me.earzuchan.markdo.resources.Res
+import me.earzuchan.markdo.resources.courses
+import me.earzuchan.markdo.resources.dashboard
 import me.earzuchan.markdo.resources.ic_courses_24px
-import me.earzuchan.markdo.resources.ic_list_24px
+import me.earzuchan.markdo.resources.ic_dashboard_24px
 import me.earzuchan.markdo.resources.ic_user_24px
+import me.earzuchan.markdo.resources.login
+import me.earzuchan.markdo.resources.logining
+import me.earzuchan.markdo.resources.my
+import me.earzuchan.markdo.resources.password
+import me.earzuchan.markdo.resources.site_domain
+import me.earzuchan.markdo.resources.splash_loading
+import me.earzuchan.markdo.resources.username
 import me.earzuchan.markdo.ui.views.CoursePage
-import me.earzuchan.markdo.ui.views.GradesPage
+import me.earzuchan.markdo.ui.views.DashboardPage
 import me.earzuchan.markdo.ui.views.MyPage
 import me.earzuchan.markdo.ui.widgets.MIcon
+import me.earzuchan.markdo.utils.ResUtils.t
 
 @OptIn(ExperimentalMaterial3Api::class, FaultyDecomposeApi::class)
 @Composable
@@ -34,16 +44,16 @@ fun MainScreen(duty: MainDuty) {
 
     Scaffold(bottomBar = {
         NavigationBar {
-            NavigationBarItem(activeInstance is GradesDuty, { duty.naviGrades() }, { MIcon(Res.drawable.ic_list_24px) }, label = { Text("成绩") })
+            NavigationBarItem(activeInstance is DashboardDuty, { duty.navDashboard() }, { MIcon(Res.drawable.ic_dashboard_24px) }, label = { Text(Res.string.dashboard.t) })
 
-            NavigationBarItem(activeInstance is CourseDuty, { duty.naviCourse() }, { MIcon(Res.drawable.ic_courses_24px) }, label = { Text("课程") })
+            NavigationBarItem(activeInstance is CourseDuty, { duty.navCourse() }, { MIcon(Res.drawable.ic_courses_24px) }, label = { Text(Res.string.courses.t) })
 
-            NavigationBarItem(activeInstance is MyDuty, { duty.naviMy() }, { MIcon(Res.drawable.ic_user_24px) }, label = { Text("我的") })
+            NavigationBarItem(activeInstance is MyDuty, { duty.navMy() }, { MIcon(Res.drawable.ic_user_24px) }, label = { Text(Res.string.my.t) })
         }
     }) {
         Children(duty.navStack, Modifier.fillMaxSize().padding(bottom = it.calculateBottomPadding()).consumeWindowInsets(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))) { created ->
             when (val ins = created.instance) {
-                is GradesDuty -> GradesPage(ins)
+                is DashboardDuty -> DashboardPage(ins)
 
                 is CourseDuty -> CoursePage(ins)
 
@@ -55,7 +65,7 @@ fun MainScreen(duty: MainDuty) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(duty: LoginDuty) = Scaffold(topBar = { TopAppBar({ Text("登录") }) }) { padding ->
+fun LoginScreen(duty: LoginDuty) = Scaffold(topBar = { TopAppBar({ Text(Res.string.login.t) }) }) { padding ->
     val baseSite by duty.baseSite.collectAsState()
     val username by duty.username.collectAsState()
     val password by duty.password.collectAsState()
@@ -64,19 +74,19 @@ fun LoginScreen(duty: LoginDuty) = Scaffold(topBar = { TopAppBar({ Text("登录"
     val disableButton by duty.disableButton.collectAsState()
 
     LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        item { OutlinedTextField(baseSite, { duty.baseSite.value = it }, Modifier.fillMaxWidth(), label = { Text("站点域名") }) }
+        item { OutlinedTextField(baseSite, { duty.baseSite.value = it }, Modifier.fillMaxWidth(), label = { Text(Res.string.site_domain.t) }) }
 
-        item { OutlinedTextField(username, { duty.username.value = it }, Modifier.fillMaxWidth(), label = { Text("用户名") }) }
+        item { OutlinedTextField(username, { duty.username.value = it }, Modifier.fillMaxWidth(), label = { Text(Res.string.username.t) }) }
 
-        item { OutlinedTextField(password, { duty.password.value = it }, Modifier.fillMaxWidth(), label = { Text("密码") }) }
+        item { OutlinedTextField(password, { duty.password.value = it }, Modifier.fillMaxWidth(), label = { Text(Res.string.password.t) }) }
 
         error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
 
-        item { Button({ duty.onLoginClick() }, Modifier.fillMaxWidth(), !disableButton) { Text(if (disableButton) "正在登录" else "登录") } }
+        item { Button({ duty.onLoginClick() }, Modifier.fillMaxWidth(), !disableButton) { Text(if (disableButton) Res.string.logining.t else Res.string.login.t) } }
     }
 }
 
 @Composable
 fun SplashScreen() = Box(Modifier.fillMaxSize().systemBarsPadding()) {
-    Text("正在\n加载", Modifier.align(Alignment.Center), style = MaterialTheme.typography.displayLarge)
+    Text(Res.string.splash_loading.t, Modifier.align(Alignment.Center), style = MaterialTheme.typography.displayLarge)
 }

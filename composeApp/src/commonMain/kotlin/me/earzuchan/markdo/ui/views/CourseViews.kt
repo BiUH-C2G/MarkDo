@@ -4,6 +4,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -12,15 +13,54 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.arkivanov.decompose.extensions.compose.stack.Children
 import lib.fetchmoodle.CourseModule
 import lib.fetchmoodle.CourseModuleAvailability
 import lib.fetchmoodle.SectionLike
 import me.earzuchan.markdo.duties.CourseDetailDuty
+import me.earzuchan.markdo.duties.CourseDuty
 import me.earzuchan.markdo.resources.*
 import me.earzuchan.markdo.ui.widgets.MIcon
-import me.earzuchan.markdo.utils.ResUtils.vector
+import me.earzuchan.markdo.utils.ResUtils.t
 import org.jetbrains.compose.resources.DrawableResource
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CoursePage(duty: CourseDuty) = Children(duty.navStack, Modifier.fillMaxSize()) { created ->
+    when (val ins = created.instance) {
+        is CourseDuty -> AllCoursesPage(ins)
+
+        is CourseDetailDuty -> CourseDetailPage(ins)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AllCoursesPage(duty: CourseDuty) = Scaffold(topBar = {
+    TopAppBar({ Text(Res.string.courses.t) })
+}) { padding ->
+    val state by duty.state.collectAsState()
+
+    Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(WindowInsets.navigationBars.only(WindowInsetsSides.Top))) {
+        when (val s = state) {
+            is CourseDuty.UIState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+
+            is CourseDuty.UIState.Error -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(s.msg, color = MaterialTheme.colorScheme.error)
+                Button({ duty.loadCourses() }) { Text(Res.string.retry.t) }
+            }
+
+            is CourseDuty.UIState.Success -> LazyColumn(Modifier.fillMaxSize()) {
+                items(s.data) {
+                    ListItem(
+                        { Text(it.name) }, Modifier.clickable { duty.navCourseDetail(it.id) },
+                        trailingContent = { Text(it.category, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    )
+                }
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,7 +72,7 @@ fun CourseDetailPage(duty: CourseDetailDuty) {
             Text(
                 when (val s = state) {
                     is CourseDetailDuty.UIState.Success -> s.data.name
-                    else -> "课程详情"
+                    else -> Res.string.course_detail.t
                 }
             )
         }, navigationIcon = { IconButton({ duty.naviBack() }) { MIcon(Res.drawable.ic_arrow_back_24px) } })
@@ -45,7 +85,7 @@ fun CourseDetailPage(duty: CourseDetailDuty) {
 
                 is CourseDetailDuty.UIState.Error -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(s.msg, color = MaterialTheme.colorScheme.error)
-                    Button({ duty.loadCourse() }) { Text("重试") }
+                    Button({ duty.loadCourse() }) { Text(Res.string.retry.t) }
                 }
 
                 is CourseDetailDuty.UIState.Success -> {
@@ -62,7 +102,7 @@ fun CourseDetailPage(duty: CourseDetailDuty) {
 fun SectionView(section: SectionLike, duty: CourseDetailDuty): Unit = Column(
     Modifier
         .fillMaxWidth()
-        .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.large)
+        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
         .padding(vertical = 16.dp)
 ) {
     // 1. 头部永远显示
@@ -133,7 +173,10 @@ fun ResourceView(resource: CourseModule.Resource, onClick: (CourseModule.Resourc
 @Composable
 fun AssignmentView(assign: CourseModule.Assignment, onClick: () -> Unit) = ListItem(
     { Text(assign.name) }, Modifier.clickable { onClick() }, leadingContent = { MIcon(Res.drawable.ic_task_24px, MaterialTheme.colorScheme.tertiary) },
-    supportingContent = { Text(listOfNotNull("开始日期：${assign.openDate}", "截止日期：${assign.dueDate}", assign.description).joinToString("\n"), color = MaterialTheme.colorScheme.error) }
+    supportingContent = {
+        listOfNotNull(assign.openDate?.let { "${Res.string.open_date.t}$it" }, assign.dueDate?.let { "${Res.string.due_time.t}$it" }, assign.description).takeIf { it.isNotEmpty() }
+            ?.let { Text(it.joinToString("\n"), color = MaterialTheme.colorScheme.error) }
+    }
 )
 
 @Composable
@@ -157,6 +200,9 @@ fun RestrictionBadge(availability: CourseModuleAvailability) {
 @Composable
 fun QuizView(quiz: CourseModule.Quiz, onClick: () -> Unit) = ListItem(
     { Text(quiz.name) }, Modifier.clickable { onClick() }, leadingContent = { MIcon(Res.drawable.ic_quiz_24px, MaterialTheme.colorScheme.tertiary) },
-    supportingContent = { Text(listOfNotNull("开始日期：${quiz.openDate}", "截止日期：${quiz.closeDate}", quiz.description, quiz.availability?.description).joinToString("\n"), color = MaterialTheme.colorScheme.error) },
+    supportingContent = {
+        listOfNotNull(quiz.openDate?.let { "${Res.string.open_date.t}$it" }, quiz.closeDate?.let { "${Res.string.close_time.t}$it" }, quiz.description, quiz.availability?.description).takeIf { it.isNotEmpty() }
+            ?.let { Text(it.joinToString("\n"), color = MaterialTheme.colorScheme.error) }
+    },
     trailingContent = { quiz.availability?.let { RestrictionBadge(it) } }
 )

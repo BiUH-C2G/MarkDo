@@ -2,6 +2,7 @@ package me.earzuchan.markdo.di
 
 import lib.fetchmoodle.MoodleFetcher
 import me.earzuchan.markdo.data.repositories.AppPreferenceRepository
+import me.earzuchan.markdo.services.AuthService
 import org.koin.dsl.module
 
 val appModule = module {
@@ -10,4 +11,7 @@ val appModule = module {
 
     // 提供TeleFetcher
     single { MoodleFetcher() }
+
+    // 提供AuthService
+    single { AuthService(get(), get()) }
 }

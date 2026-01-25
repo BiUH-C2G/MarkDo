@@ -3,9 +3,6 @@ package me.earzuchan.markdo.utils
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
@@ -16,6 +13,11 @@ import me.earzuchan.markdo.data.APP_PREFERENCES_NAME
 import okio.Path.Companion.toOkioPath
 import org.jetbrains.compose.resources.*
 import java.io.File
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 
 expect object MarkDoLog {
     fun d(tag: String, vararg messages: Any?)
@@ -74,30 +76,43 @@ object ComposeUtils {
         val newAlpha = alpha * opacity
         return this.copy(newAlpha)
     }
-
-    inline val Int.dpPx: Float
-        @Composable
-        get() = this.dp.px
-
-    inline val Dp.px: Float
-        @Composable
-        get() = LocalDensity.current.run { this@px.toPx() }
 }
 
 object ResUtils {
-    val DrawableResource.vector
+    val DrawableResource.v
         @Composable
         get() = vectorResource(this)
 
-    val DrawableResource.image
+    val DrawableResource.i
         @Composable
         get() = imageResource(this)
 
+    val DrawableResource.p
+        @Composable
+        get() = painterResource(this)
+
 
     @Composable
-    fun StringResource.text(vararg format: String): String = stringResource(this, *format)
+    fun StringResource.t(vararg format: String): String = stringResource(this, *format)
 
-    val StringResource.text
+    val StringResource.t
         @Composable
-        get() = this.text()
+        get() = this.t()
+}
+
+object DataUtils {
+    @Suppress("NewApi")
+    val Long.timeStr: String
+        get() {
+            val instant = Instant.ofEpochSecond(this)
+
+            val zoneId = ZoneId.systemDefault()
+
+            val formatter = DateTimeFormatter
+                .ofLocalizedDateTime(FormatStyle.MEDIUM)
+                .withLocale(Locale.getDefault())
+
+            // 4. 结合时区进行格式化
+            return instant.atZone(zoneId).format(formatter)
+        }
 }

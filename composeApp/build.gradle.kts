@@ -12,6 +12,7 @@ val verCode = SimpleDateFormat("yyyyMMdd").format(Date()).toInt()
 val verName = "1.0.1"
 // 包名
 val appId = "me.earzuchan.markdo"
+val appName = "MarkDo"
 
 val myGeneratedCodeDir = "generated/source/buildConstants"
 
@@ -170,7 +171,7 @@ compose {
 
             nativeDistributions {
                 targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-                packageName = appId
+                packageName = appName
                 packageVersion = verName
 
                 buildTypes.release {

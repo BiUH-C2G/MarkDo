@@ -14,6 +14,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import me.earzuchan.markdo.duties.DashboardDuty
 import me.earzuchan.markdo.resources.*
+import me.earzuchan.markdo.services.MoodleService
 import me.earzuchan.markdo.ui.widgets.MIcon
 import me.earzuchan.markdo.utils.DataUtils.timeStr
 import me.earzuchan.markdo.utils.ResUtils.t
@@ -38,16 +39,16 @@ fun DashboardPage(duty: DashboardDuty) {
 }
 
 @Composable
-fun RecentItemsSection(state: DashboardDuty.RecentItemsState, duty: DashboardDuty) = OutlinedCard(Modifier.fillMaxWidth()) {
+fun RecentItemsSection(state: MoodleService.RecentItemsState, duty: DashboardDuty) = OutlinedCard(Modifier.fillMaxWidth()) {
     Column {
         Text(Res.string.recent_items.t, Modifier.padding(16.dp), MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge)
 
         when (state) {
-            is DashboardDuty.RecentItemsState.Loading -> LoadingBox()
+            is MoodleService.RecentItemsState.Loading -> LoadingBox()
 
-            is DashboardDuty.RecentItemsState.Error -> ErrorBox(state.msg) { duty.fetchData() }
+            is MoodleService.RecentItemsState.Error -> ErrorBox(state.msg) { duty.refetchRecent() }
 
-            is DashboardDuty.RecentItemsState.Success -> {
+            is MoodleService.RecentItemsState.Success -> {
                 if (state.data.isEmpty()) EmptyBox(Res.string.no_recent_items.t) else Column {
                     state.data.forEach {
                         ListItem(
@@ -62,16 +63,16 @@ fun RecentItemsSection(state: DashboardDuty.RecentItemsState, duty: DashboardDut
 }
 
 @Composable
-fun TimelineSection(state: DashboardDuty.TimelineState, duty: DashboardDuty) = OutlinedCard(Modifier.fillMaxWidth()) {
+fun TimelineSection(state: MoodleService.TimelineState, duty: DashboardDuty) = OutlinedCard(Modifier.fillMaxWidth()) {
     Column {
         Text(Res.string.timeline.t, Modifier.padding(16.dp), MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge)
 
         when (state) {
-            is DashboardDuty.TimelineState.Loading -> LoadingBox()
+            is MoodleService.TimelineState.Loading -> LoadingBox()
 
-            is DashboardDuty.TimelineState.Error -> ErrorBox(state.msg) { duty.fetchData() }
+            is MoodleService.TimelineState.Error -> ErrorBox(state.msg) { duty.refetchTimeline() }
 
-            is DashboardDuty.TimelineState.Success -> {
+            is MoodleService.TimelineState.Success -> {
                 if (state.data.isEmpty()) EmptyBox(Res.string.empty_timeline.t) else Column {
                     state.data.forEach {
                         ListItem(

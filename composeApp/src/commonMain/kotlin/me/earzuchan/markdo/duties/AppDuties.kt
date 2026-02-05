@@ -13,8 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import me.earzuchan.markdo.resources.Res
 import me.earzuchan.markdo.resources.click_again_to_exit
-import me.earzuchan.markdo.services.AuthService
-import me.earzuchan.markdo.services.AuthState
+import me.earzuchan.markdo.services.MoodleService
 import me.earzuchan.markdo.ui.models.AppToastModel
 import me.earzuchan.markdo.utils.MarkDoLog
 import me.earzuchan.markdo.utils.MiscUtils.ioDispatcherLaunch
@@ -30,7 +29,7 @@ class AppDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent {
         private const val TAG = "AppDuty"
     }
 
-    val authService: AuthService by inject()
+    val moodleService: MoodleService by inject()
 
     var lastBackTime: Long = 0L
 
@@ -41,7 +40,7 @@ class AppDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent {
         ioDispatcherLaunch {
             clickAgainStr = getString(Res.string.click_again_to_exit)
 
-            authService.autoLogin()
+            moodleService.autoLogin()
         }
 
         // TODO：实现子视图的返回
@@ -82,9 +81,13 @@ class AppDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent {
 
         // Screen Navigation
         mainDispatcherLaunch {
-            authService.state.collect { state ->
-                if (state is AuthState.Unauthed) navigation.replaceAll(AppNavis.Login)
-                else if (state is AuthState.Authed) navigation.replaceAll(AppNavis.Main)
+            moodleService.authState.collect { state ->
+                if (state is MoodleService.AuthState.Unauthed) {
+                    if (state.reason == MoodleService.AUTH_MSG_NO_LOGIN_INFO) showToast(MoodleService.AUTH_MSG_NO_LOGIN_INFO)
+
+                    navigation.replaceAll(AppNavis.Login)
+                }
+                else if (state is MoodleService.AuthState.Authed) navigation.replaceAll(AppNavis.Main)
             }
         }
     }

@@ -20,6 +20,7 @@ import lib.fetchmoodle.SectionLike
 import me.earzuchan.markdo.duties.CourseDetailDuty
 import me.earzuchan.markdo.duties.CourseDuty
 import me.earzuchan.markdo.resources.*
+import me.earzuchan.markdo.services.MoodleService
 import me.earzuchan.markdo.ui.widgets.MIcon
 import me.earzuchan.markdo.utils.ResUtils.t
 import org.jetbrains.compose.resources.DrawableResource
@@ -43,14 +44,14 @@ fun AllCoursesPage(duty: CourseDuty) = Scaffold(topBar = {
 
     Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(WindowInsets.navigationBars.only(WindowInsetsSides.Top))) {
         when (val s = state) {
-            is CourseDuty.UIState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+            is MoodleService.CoursesState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
 
-            is CourseDuty.UIState.Error -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+            is MoodleService.CoursesState.Error -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(s.msg, color = MaterialTheme.colorScheme.error)
-                Button({ duty.loadCourses() }) { Text(Res.string.retry.t) }
+                Button({ duty.refetchCourses() }) { Text(Res.string.retry.t) }
             }
 
-            is CourseDuty.UIState.Success -> LazyColumn(Modifier.fillMaxSize()) {
+            is MoodleService.CoursesState.Success -> LazyColumn(Modifier.fillMaxSize()) {
                 items(s.data) {
                     ListItem(
                         { Text(it.name) }, Modifier.clickable { duty.navCourseDetail(it.id) },

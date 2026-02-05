@@ -15,10 +15,8 @@ import lib.fetchmoodle.MoodleCourseGrade
 import lib.fetchmoodle.MoodleFetcher
 import lib.fetchmoodle.MoodleResult
 import me.earzuchan.markdo.data.repositories.AppPreferenceRepository
-import me.earzuchan.markdo.services.AuthService
-import me.earzuchan.markdo.utils.MarkDoLog
+import me.earzuchan.markdo.services.MoodleService
 import me.earzuchan.markdo.utils.MiscUtils.ioDispatcherLaunch
-import me.earzuchan.markdo.utils.MiscUtils.mainDispatcherLaunch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.getValue
@@ -33,19 +31,15 @@ class MyDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent, IC
         true
     } else false
 
-    val appPrefRepo: AppPreferenceRepository by inject()
-    val authService: AuthService by inject()
-    val moodleFetcher: MoodleFetcher by inject()
+    val moodleService: MoodleService by inject()
 
-    fun logout() = ioDispatcherLaunch { authService.logout() }
+    fun logout() = ioDispatcherLaunch { moodleService.logout() }
 
     val userName = MutableStateFlow("加载用户姓名中")
 
     init {
         ioDispatcherLaunch {
-            val result = moodleFetcher.getUserProfile()
-            userName.value = if (result is MoodleResult.Success) result.data.name
-            else "用户：${appPrefRepo.username.first()}"
+            moodleService.userProfile.collect { it?.let { pf -> userName.value = pf.name } }
         }
     }
 

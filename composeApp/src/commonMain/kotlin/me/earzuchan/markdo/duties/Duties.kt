@@ -3,8 +3,7 @@ package me.earzuchan.markdo.duties
 import com.arkivanov.decompose.ComponentContext
 import kotlinx.coroutines.flow.*
 import me.earzuchan.markdo.data.repositories.AppPreferenceRepository
-import me.earzuchan.markdo.services.AuthService
-import me.earzuchan.markdo.services.AuthState
+import me.earzuchan.markdo.services.MoodleService
 import me.earzuchan.markdo.utils.MarkDoLog
 import me.earzuchan.markdo.utils.MiscUtils.ioDispatcherLaunch
 import org.koin.core.component.KoinComponent
@@ -17,7 +16,7 @@ class LoginDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent 
         const val TAG = "LoginDuty"
     }
 
-    private val authService: AuthService by inject()
+    private val moodleService: MoodleService by inject()
     private val appPrefRepo: AppPreferenceRepository by inject()
 
     // UI 状态
@@ -37,8 +36,8 @@ class LoginDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent 
 
             MarkDoLog.i(TAG, "带派吗老弟：${username.value}，${password.value}")
 
-            authService.state.collect {
-                if (it is AuthState.Unauthed && inHere.value) {
+            moodleService.authState.collect {
+                if (it is MoodleService.AuthState.Unauthed && inHere.value) {
                     errorMessage.value = it.reason
                     disableButton.value = false
                 }
@@ -62,7 +61,7 @@ class LoginDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent 
             disableButton.value = true
             errorMessage.value = null
 
-            authService.manualLogin(site, user, pwd)
+            moodleService.manualLogin(site, user, pwd)
         }
     }
 }

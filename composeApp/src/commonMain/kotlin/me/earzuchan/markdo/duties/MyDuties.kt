@@ -10,11 +10,10 @@ import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
+import me.earzuchan.markdo.data.models.SavedLoginAccount
 import lib.fetchmoodle.MoodleCourseGrade
 import lib.fetchmoodle.MoodleFetcher
 import lib.fetchmoodle.MoodleResult
-import me.earzuchan.markdo.data.repositories.AppPreferenceRepository
 import me.earzuchan.markdo.services.MoodleService
 import me.earzuchan.markdo.utils.MiscUtils.ioDispatcherLaunch
 import org.koin.core.component.KoinComponent
@@ -35,11 +34,55 @@ class MyDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent, IC
 
     fun logout() = ioDispatcherLaunch { moodleService.logout() }
 
+    fun switchAccount(accountKey: String) = ioDispatcherLaunch {
+        if (switchingAccount.value || activeAccountKey.value == accountKey) return@ioDispatcherLaunch
+
+        switchingAccount.value = true
+
+        try {
+            moodleService.switchAccount(accountKey)
+        } finally {
+            switchingAccount.value = false
+        }
+    }
+
+    fun removeRememberedAccount(accountKey: String) = ioDispatcherLaunch {
+        if (switchingAccount.value || activeAccountKey.value == accountKey) return@ioDispatcherLaunch
+
+        switchingAccount.value = true
+
+        try {
+            moodleService.removeRememberedAccount(accountKey)
+        } finally {
+            switchingAccount.value = false
+        }
+    }
+
     val userName = MutableStateFlow("加载用户姓名中")
+    val rememberedAccounts = MutableStateFlow<List<SavedLoginAccount>>(emptyList())
+    val activeAccountKey = MutableStateFlow<String?>(null)
+    val switchingAccount = MutableStateFlow(false)
 
     init {
         ioDispatcherLaunch {
             moodleService.userProfile.collect { it?.let { pf -> userName.value = pf.name } }
+        }
+
+        ioDispatcherLaunch {
+            rememberedAccounts.value = moodleService.getRememberedAccounts()
+            activeAccountKey.value = moodleService.activeAccountKey.value
+        }
+
+        ioDispatcherLaunch {
+            moodleService.rememberedAccounts.collect { accounts ->
+                rememberedAccounts.value = accounts
+            }
+        }
+
+        ioDispatcherLaunch {
+            moodleService.activeAccountKey.collect { key ->
+                activeAccountKey.value = key
+            }
         }
     }
 
@@ -91,5 +134,4 @@ class GradesDuty(ctx: ComponentContext, val navBack: () -> Unit) : ComponentCont
 }
 
 class SettingsDuty(ctx: ComponentContext, val navBack: () -> Unit) : ComponentContext by ctx, KoinComponent {
-    val appPrefRepo: AppPreferenceRepository by inject()
 }

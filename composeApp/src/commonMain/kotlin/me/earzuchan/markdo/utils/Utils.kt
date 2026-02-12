@@ -6,9 +6,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import androidx.room.RoomDatabase
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import me.earzuchan.markdo.data.databases.AppDatabase
 import me.earzuchan.markdo.data.APP_PREFERENCES_NAME
 import okio.Path.Companion.toOkioPath
 import org.jetbrains.compose.resources.*
@@ -27,7 +30,7 @@ expect object MarkDoLog {
 }
 
 expect object PlatformFunctions {
-    /*fun getAppDatabaseBuilder(): RoomDatabase.Builder<AppDatabase>*/
+    fun getAppDatabaseBuilder(): RoomDatabase.Builder<AppDatabase>
 
     fun getAppFilesPath(): File
 
@@ -41,10 +44,11 @@ object MiscUtils {
     private const val TAG = "MiscUtils"
 
     // 每次新建
-    /*fun buildAppDatabase(): AppDatabase = PlatformFunctions.getAppDatabaseBuilder()
+    fun buildAppDatabase(): AppDatabase = PlatformFunctions.getAppDatabaseBuilder()
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
-        .build()*/
+        .fallbackToDestructiveMigration(true)
+        .build()
 
     fun buildAppPreferences(): DataStore<Preferences> = PreferenceDataStoreFactory.createWithPath(
         produceFile = { File(PlatformFunctions.getAppFilesPath(), APP_PREFERENCES_NAME).toOkioPath() }

@@ -39,8 +39,21 @@ class AppDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent {
         // Init Data
         ioDispatcherLaunch {
             clickAgainStr = getString(Res.string.click_again_to_exit)
+            when (moodleService.bootstrap()) {
+                MoodleService.BootstrapRoute.Main -> {
+                    mainDispatcherLaunch { navigation.replaceAll(AppNavis.Main) }
+                    moodleService.autoLogin(allowOfflineFallback = true)
+                }
 
-            moodleService.autoLogin()
+                MoodleService.BootstrapRoute.SplashAndLogin -> {
+                    mainDispatcherLaunch { navigation.replaceAll(AppNavis.Splash) }
+                    moodleService.autoLogin(allowOfflineFallback = false)
+                }
+
+                MoodleService.BootstrapRoute.Login -> {
+                    mainDispatcherLaunch { navigation.replaceAll(AppNavis.Login) }
+                }
+            }
         }
 
         // TODO：实现子视图的返回
@@ -83,7 +96,7 @@ class AppDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent {
         mainDispatcherLaunch {
             moodleService.authState.collect { state ->
                 if (state is MoodleService.AuthState.Unauthed) {
-                    if (state.reason == MoodleService.AUTH_MSG_NO_LOGIN_INFO) showToast(MoodleService.AUTH_MSG_NO_LOGIN_INFO)
+                    if (state.reason.isNotBlank() && navStack.active.instance !is LoginDuty) showToast(state.reason)
 
                     navigation.replaceAll(AppNavis.Login)
                 }

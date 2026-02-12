@@ -2,24 +2,35 @@ package me.earzuchan.markdo.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.FaultyDecomposeApi
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
+import me.earzuchan.markdo.data.models.SavedLoginAccount
 import me.earzuchan.markdo.duties.CourseDuty
 import me.earzuchan.markdo.duties.DashboardDuty
 import me.earzuchan.markdo.duties.LoginDuty
 import me.earzuchan.markdo.duties.MainDuty
 import me.earzuchan.markdo.duties.MyDuty
 import me.earzuchan.markdo.resources.Res
+import me.earzuchan.markdo.resources.cancel
+import me.earzuchan.markdo.resources.confirm
+import me.earzuchan.markdo.resources.confirm_delete_account
 import me.earzuchan.markdo.resources.courses
 import me.earzuchan.markdo.resources.dashboard
+import me.earzuchan.markdo.resources.delete_account
+import me.earzuchan.markdo.resources.delete_account_desc
+import me.earzuchan.markdo.resources.ic_block_24px
 import me.earzuchan.markdo.resources.ic_courses_24px
 import me.earzuchan.markdo.resources.ic_dashboard_24px
 import me.earzuchan.markdo.resources.ic_user_24px
@@ -27,11 +38,14 @@ import me.earzuchan.markdo.resources.login
 import me.earzuchan.markdo.resources.logining
 import me.earzuchan.markdo.resources.my
 import me.earzuchan.markdo.resources.password
+import me.earzuchan.markdo.resources.remembered_accounts
 import me.earzuchan.markdo.resources.site_domain
 import me.earzuchan.markdo.resources.splash_loading
 import me.earzuchan.markdo.resources.username
+import me.earzuchan.markdo.ui.models.DialogActionItem
 import me.earzuchan.markdo.ui.views.CoursePage
 import me.earzuchan.markdo.ui.views.DashboardPage
+import me.earzuchan.markdo.ui.views.MAlertDialog
 import me.earzuchan.markdo.ui.views.MyPage
 import me.earzuchan.markdo.ui.widgets.MIcon
 import me.earzuchan.markdo.utils.ResUtils.t
@@ -69,9 +83,19 @@ fun LoginScreen(duty: LoginDuty) = Scaffold(topBar = { TopAppBar({ Text(Res.stri
     val baseSite by duty.baseSite.collectAsState()
     val username by duty.username.collectAsState()
     val password by duty.password.collectAsState()
+    val rememberedAccounts by duty.rememberedAccounts.collectAsState()
 
     val error by duty.errorMessage.collectAsState()
     val disableButton by duty.disableButton.collectAsState()
+
+    var pendingDelete by remember { mutableStateOf<SavedLoginAccount?>(null) }
+
+    pendingDelete?.let { account ->
+        MAlertDialog(
+            Res.string.confirm_delete_account.t, Res.drawable.ic_block_24px, "${Res.string.delete_account_desc.t}\n${account.username}@${account.baseSite}", listOf(
+                DialogActionItem(Res.string.cancel.t), DialogActionItem(Res.string.confirm.t) { duty.wannaDelete(account.accountKey) }
+            ), false, { pendingDelete = null })
+    }
 
     LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         item { OutlinedTextField(baseSite, { duty.baseSite.value = it }, Modifier.fillMaxWidth(), label = { Text(Res.string.site_domain.t) }) }
@@ -79,6 +103,25 @@ fun LoginScreen(duty: LoginDuty) = Scaffold(topBar = { TopAppBar({ Text(Res.stri
         item { OutlinedTextField(username, { duty.username.value = it }, Modifier.fillMaxWidth(), label = { Text(Res.string.username.t) }) }
 
         item { OutlinedTextField(password, { duty.password.value = it }, Modifier.fillMaxWidth(), label = { Text(Res.string.password.t) }) }
+
+        if (rememberedAccounts.isNotEmpty()) {
+            item { Text(Res.string.remembered_accounts.t, style = MaterialTheme.typography.titleMedium, modifier = Modifier.fillMaxWidth()) }
+
+            items(rememberedAccounts, key = { it.accountKey }) { account ->
+                Card({ duty.onRememberedAccountClick(account.accountKey) }, Modifier.fillMaxWidth()) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(account.username, style = MaterialTheme.typography.bodyLarge)
+                            Text(account.baseSite, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+
+                        TextButton({ pendingDelete = account }) {
+                            Text(Res.string.delete_account.t, color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+            }
+        }
 
         error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
 

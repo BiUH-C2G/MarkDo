@@ -1,15 +1,18 @@
 package me.earzuchan.markdo.ui.views
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import me.earzuchan.markdo.data.models.SavedLoginAccount
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import me.earzuchan.markdo.duties.GradesDuty
 import me.earzuchan.markdo.duties.MyDuty
@@ -38,8 +41,13 @@ fun OverviewPage(duty: MyDuty) = Scaffold(topBar = {
 }) { padding ->
     var showWhetherLogout by remember { mutableStateOf(false) }
     var showAbout by remember { mutableStateOf(false) }
+    var showSwitchAccountDialog by remember { mutableStateOf(false) }
+    var pendingDeleteAccount by remember { mutableStateOf<SavedLoginAccount?>(null) }
 
     val userName by duty.userName.collectAsState()
+    val rememberedAccounts by duty.rememberedAccounts.collectAsState()
+    val activeAccountKey by duty.activeAccountKey.collectAsState()
+    val switchingAccount by duty.switchingAccount.collectAsState()
 
     if (showWhetherLogout) MAlertDialog(
         Res.string.sure_logout.t,
@@ -48,7 +56,42 @@ fun OverviewPage(duty: MyDuty) = Scaffold(topBar = {
         listOf(DialogActionItem(Res.string.confirm.t) { duty.logout() }, DialogActionItem(Res.string.cancel.t)),
         true,
         { showWhetherLogout = false })
+
     if (showAbout) MAlertDialog(Res.string.about.t, Res.drawable.ic_info_24px, Res.string.about_desc.t, listOf(DialogActionItem(Res.string.ok.t)), true, { showAbout = false })
+
+    if (showSwitchAccountDialog) MAlertDialog(Res.string.account_switch.t, null, null, listOf(DialogActionItem(Res.string.close.t)), false, { showSwitchAccountDialog = false }, {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp).verticalScroll(rememberScrollState()), Arrangement.spacedBy(8.dp)) {
+            rememberedAccounts.forEach { account ->
+                Card(Modifier.fillMaxWidth()) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(account.username, style = MaterialTheme.typography.bodyLarge)
+
+                            Text(account.baseSite, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+
+                        if (account.accountKey == activeAccountKey) Text(Res.string.current_account.t, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+                        else Row(verticalAlignment = Alignment.CenterVertically) {
+                            TextButton(
+                                {
+                                    duty.switchAccount(account.accountKey)
+                                    showSwitchAccountDialog = false
+                                }, enabled = !switchingAccount
+                            ) { Text(Res.string.switch_account.t) }
+                            TextButton({ pendingDeleteAccount = account }, enabled = !switchingAccount) { Text(Res.string.delete_account.t) }
+                        }
+                    }
+                }
+            }
+        }
+    })
+
+    pendingDeleteAccount?.let { account ->
+        MAlertDialog(
+            Res.string.confirm_delete_account.t, Res.drawable.ic_block_24px, "${Res.string.delete_account_desc.t}\n${account.username}@${account.baseSite}", listOf(
+                DialogActionItem(Res.string.cancel.t),DialogActionItem(Res.string.confirm.t) { duty.removeRememberedAccount(account.accountKey) }
+            ), false, { pendingDeleteAccount = null })
+    }
 
     LazyColumn(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(WindowInsets.navigationBars.only(WindowInsetsSides.Top))) {
         item("name") {
@@ -73,6 +116,10 @@ fun OverviewPage(duty: MyDuty) = Scaffold(topBar = {
 
         item("about") {
             ListItem({ Text(Res.string.about.t) }, Modifier.clickable { showAbout = true }, leadingContent = { MIcon(Res.drawable.ic_info_24px) })
+        }
+
+        if (rememberedAccounts.size > 1) item("account_switch") {
+            ListItem({ Text(Res.string.account_switch.t) }, Modifier.clickable { showSwitchAccountDialog = true }, leadingContent = { MIcon(Res.drawable.ic_switch_account_24px) })
         }
 
         item("logout") {

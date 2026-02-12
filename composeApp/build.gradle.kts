@@ -64,6 +64,7 @@ kotlin {
             implementation(libs.androidx.sqlite.bundled)
 
             implementation(libs.androidx.datastore.preferences)
+            implementation(libs.kotlinx.serialization.json)
 
             // HACK：这个主要是为了加载FetchMoodle库（无内联依赖的版本），你自行构建
             implementation(fileTree("exLibs"))

@@ -1,5 +1,9 @@
 package me.earzuchan.markdo.utils
 
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import me.earzuchan.markdo.data.APP_DATABASE_NAME
+import me.earzuchan.markdo.data.databases.AppDatabase
 import java.io.File
 import javax.swing.SwingUtilities
 
@@ -30,7 +34,13 @@ actual object PlatformFunctions {
 
     // Data
 
-    actual fun getAppFilesPath(): File = File(getAppDataPath(), "files")
+    actual fun getAppDatabaseBuilder(): RoomDatabase.Builder<AppDatabase> {
+        val dbFile = File(getAppDataPath(), "databases/$APP_DATABASE_NAME")
+        dbFile.parentFile?.mkdirs()
+        return Room.databaseBuilder<AppDatabase>(name = dbFile.absolutePath)
+    }
+
+    actual fun getAppFilesPath(): File = File(getAppDataPath(), "files").also { it.mkdirs() }
 
     private fun getAppDataPath(): File = File(System.getProperty("user.home"), "me.earzuchan.markdo")
 

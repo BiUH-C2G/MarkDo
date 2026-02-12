@@ -2,9 +2,9 @@ package me.earzuchan.markdo.duties
 
 import com.arkivanov.decompose.ComponentContext
 import kotlinx.coroutines.flow.*
-import me.earzuchan.markdo.data.repositories.AppPreferenceRepository
+import me.earzuchan.markdo.data.models.SavedLoginAccount
+import me.earzuchan.markdo.data.preferences.AppPreferences
 import me.earzuchan.markdo.services.MoodleService
-import me.earzuchan.markdo.utils.MarkDoLog
 import me.earzuchan.markdo.utils.MiscUtils.ioDispatcherLaunch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -12,17 +12,13 @@ import org.koin.core.component.inject
 class SplashDuty(ctx: ComponentContext) : ComponentContext by ctx
 
 class LoginDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent {
-    private companion object {
-        const val TAG = "LoginDuty"
-    }
-
     private val moodleService: MoodleService by inject()
-    private val appPrefRepo: AppPreferenceRepository by inject()
 
     // UI 状态
     val baseSite = MutableStateFlow("")
     val username = MutableStateFlow("")
     val password = MutableStateFlow("")
+    val rememberedAccounts = MutableStateFlow<List<SavedLoginAccount>>(emptyList())
 
     val errorMessage = MutableStateFlow<String?>(null)
     val disableButton = MutableStateFlow(false)
@@ -30,17 +26,33 @@ class LoginDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent 
 
     init {
         ioDispatcherLaunch {
-            baseSite.value = appPrefRepo.baseSite.first()
-            username.value = appPrefRepo.username.first()
-            password.value = appPrefRepo.password.first()
+            val draft = moodleService.getPreferredLoginDraft()
+            baseSite.value = draft.baseSite
+            username.value = draft.username
+            password.value = draft.password
 
-            MarkDoLog.i(TAG, "带派吗老弟：${username.value}，${password.value}")
+            rememberedAccounts.value = moodleService.getRememberedAccounts()
 
             moodleService.authState.collect {
-                if (it is MoodleService.AuthState.Unauthed && inHere.value) {
-                    errorMessage.value = it.reason
-                    disableButton.value = false
+                if (it is MoodleService.AuthState.Unauthed) {
+                    if (it.reason == MoodleService.AUTH_MSG_USER_LOGOUT) {
+                        baseSite.value = AppPreferences.DEFAULT_BASE_SITE
+                        username.value = ""
+                        password.value = ""
+                        errorMessage.value = null
+                        disableButton.value = false
+                        inHere.value = false
+                    } else if (inHere.value) {
+                        errorMessage.value = it.reason
+                        disableButton.value = false
+                    }
                 }
+            }
+        }
+
+        ioDispatcherLaunch {
+            moodleService.rememberedAccounts.collect { accounts ->
+                rememberedAccounts.value = accounts
             }
         }
     }
@@ -62,6 +74,24 @@ class LoginDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent 
             errorMessage.value = null
 
             moodleService.manualLogin(site, user, pwd)
+        }
+    }
+
+    fun onRememberedAccountClick(accountKey: String) {
+        ioDispatcherLaunch {
+            val draft = moodleService.getLoginDraftByAccountKey(accountKey) ?: return@ioDispatcherLaunch
+            baseSite.value = draft.baseSite
+            username.value = draft.username
+            password.value = draft.password
+            errorMessage.value = null
+        }
+    }
+
+    fun wannaDelete(accountKey: String) {
+        ioDispatcherLaunch {
+            val removed = moodleService.removeRememberedAccount(accountKey)
+
+            if (!removed) errorMessage.value = "当前账号不支持删除"
         }
     }
 }

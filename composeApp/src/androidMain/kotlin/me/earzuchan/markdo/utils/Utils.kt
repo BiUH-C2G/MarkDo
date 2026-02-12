@@ -1,6 +1,10 @@
 ﻿package me.earzuchan.markdo.utils
 
 import android.util.Log
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import me.earzuchan.markdo.data.APP_DATABASE_NAME
+import me.earzuchan.markdo.data.databases.AppDatabase
 import me.earzuchan.markdo.misc.AndroidApp
 import java.io.File
 import kotlin.system.exitProcess
@@ -36,6 +40,11 @@ actual object PlatformFunctions {
     private const val TAG = "AndroidPlatformFunctions"
 
     // Data
+
+    actual fun getAppDatabaseBuilder(): RoomDatabase.Builder<AppDatabase> {
+        val dbPath = AndroidApp.appContext.getDatabasePath(APP_DATABASE_NAME).absolutePath
+        return Room.databaseBuilder<AppDatabase>(context = AndroidApp.appContext, name = dbPath)
+    }
 
     actual fun getAppFilesPath(): File = AndroidApp.appContext.filesDir // 在 /data/data/包名/files/ 下
 

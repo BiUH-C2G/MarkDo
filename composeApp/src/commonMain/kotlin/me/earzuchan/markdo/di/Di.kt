@@ -1,17 +1,25 @@
 package me.earzuchan.markdo.di
 
 import lib.fetchmoodle.MoodleFetcher
+import me.earzuchan.markdo.data.databases.AppDatabase
+import me.earzuchan.markdo.data.repositories.AccountRepository
 import me.earzuchan.markdo.data.repositories.AppPreferenceRepository
+import me.earzuchan.markdo.data.repositories.DataCacheRepository
 import me.earzuchan.markdo.services.MoodleService
+import me.earzuchan.markdo.utils.MiscUtils
 import org.koin.dsl.module
 
 val appModule = module {
-    // 提供App偏好项仓库：需较早初始化
-    single { AppPreferenceRepository() }
+    // 提供 Room DB
+    single { MiscUtils.buildAppDatabase() }
+    single { get<AppDatabase>().savedLoginAccountDao() }
+    single { get<AppDatabase>().moodleCacheDao() }
 
-    // 提供TeleFetcher
+    single { AppPreferenceRepository() }
+    single { AccountRepository(get()) }
+    single { DataCacheRepository(get()) }
+
     single { MoodleFetcher() }
 
-    // 提供AuthService
-    single { MoodleService(get(), get()) }
+    single { MoodleService(get(), get(), get()) }
 }

@@ -8,19 +8,14 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.room.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import me.earzuchan.markdo.data.databases.AppDatabase
 import me.earzuchan.markdo.data.APP_PREFERENCES_NAME
-import okio.Path.Companion.toOkioPath
+import me.earzuchan.markdo.data.databases.AppDatabase
+import okio.Path.Companion.toPath
 import org.jetbrains.compose.resources.*
-import java.io.File
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
-import java.util.Locale
 
 expect object MarkDoLog {
     fun d(tag: String, vararg messages: Any?)
@@ -32,11 +27,17 @@ expect object MarkDoLog {
 expect object PlatformFunctions {
     fun getAppDatabaseBuilder(): RoomDatabase.Builder<AppDatabase>
 
-    fun getAppFilesPath(): File
+    fun getAppFilesPath(): String
 
     fun importTextFromFile(onResult: (content: String?, error: String?) -> Unit)
 
     fun exportTextToFile(defaultName: String, content: String, onResult: (success: Boolean, error: String?) -> Unit)
+
+    fun formatEpochSecond(epochSecond: Long): String
+
+    fun currentTimeMillis(): Long
+
+    val ioDispatcher: CoroutineDispatcher
 
     // App Helper
     fun setupApp()
@@ -50,17 +51,17 @@ object MiscUtils {
     // 每次新建
     fun buildAppDatabase(): AppDatabase = PlatformFunctions.getAppDatabaseBuilder()
         .setDriver(BundledSQLiteDriver())
-        .setQueryCoroutineContext(Dispatchers.IO)
+        .setQueryCoroutineContext(PlatformFunctions.ioDispatcher)
         .fallbackToDestructiveMigration(true)
         .build()
 
     fun buildAppPreferences(): DataStore<Preferences> = PreferenceDataStoreFactory.createWithPath(
-        produceFile = { File(PlatformFunctions.getAppFilesPath(), APP_PREFERENCES_NAME).toOkioPath() }
+        produceFile = { "${PlatformFunctions.getAppFilesPath()}/$APP_PREFERENCES_NAME".toPath() }
     )
 
     // 预制菜
     val defaultDispatcherScope = CoroutineScope(Dispatchers.Default)
-    val ioDispatcherScope = CoroutineScope(Dispatchers.IO)
+    val ioDispatcherScope = CoroutineScope(PlatformFunctions.ioDispatcher)
     val mainDispatcherScope = CoroutineScope(Dispatchers.Main)
 
     // 使用默认的协程上下文来启动任务
@@ -109,18 +110,6 @@ object ResUtils {
 }
 
 object DataUtils {
-    @Suppress("NewApi")
     val Long.timeStr: String
-        get() {
-            val instant = Instant.ofEpochSecond(this)
-
-            val zoneId = ZoneId.systemDefault()
-
-            val formatter = DateTimeFormatter
-                .ofLocalizedDateTime(FormatStyle.MEDIUM)
-                .withLocale(Locale.getDefault())
-
-            // 4. 结合时区进行格式化
-            return instant.atZone(zoneId).format(formatter)
-        }
+        get() = PlatformFunctions.formatEpochSecond(this)
 }

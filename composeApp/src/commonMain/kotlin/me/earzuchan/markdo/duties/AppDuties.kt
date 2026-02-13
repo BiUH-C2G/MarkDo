@@ -67,7 +67,7 @@ class AppDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent {
                     if (backed) return
                 }
 
-                val nowBackTime = System.currentTimeMillis() // 或者 SystemClock.elapsedRealtime()
+                val nowBackTime = PlatformFunctions.currentTimeMillis() // 或者 SystemClock.elapsedRealtime()
 
                 if (nowBackTime - lastBackTime < 2000) PlatformFunctions.stopApp()
                 else {

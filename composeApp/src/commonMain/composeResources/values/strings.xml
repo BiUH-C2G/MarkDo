@@ -67,6 +67,9 @@
     <string name="trans_rule_type_regex">正则替换</string>
     <string name="trans_rule_type_location">定位替换</string>
     <string name="trans_create_rule_from_current">为当前文本创建规则</string>
+    <string name="trans_view_effective_rules">生效的规则</string>
+    <string name="trans_view_raw_text">查看原文</string>
+    <string name="trans_original_text">原文</string>
     <string name="trans_create_rule">新建规则</string>
     <string name="trans_edit_rule">编辑规则</string>
     <string name="trans_rule_type">规则类型</string>

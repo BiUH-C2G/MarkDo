@@ -2,11 +2,18 @@ package me.earzuchan.markdo.utils
 
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import me.earzuchan.markdo.data.APP_DATABASE_NAME
 import me.earzuchan.markdo.data.databases.AppDatabase
 import java.awt.FileDialog
 import java.awt.Frame
 import java.io.File
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 import javax.swing.SwingUtilities
 
 actual object MarkDoLog {
@@ -43,7 +50,7 @@ actual object PlatformFunctions {
         return Room.databaseBuilder<AppDatabase>(name = dbFile.absolutePath)
     }
 
-    actual fun getAppFilesPath(): File = File(getAppDataPath(), "files").also { it.mkdirs() }
+    actual fun getAppFilesPath(): String = File(getAppDataPath(), "files").also { it.mkdirs() }.absolutePath
 
     private fun getAppDataPath(): File = File(System.getProperty("user.home"), "me.earzuchan.markdo")
 
@@ -73,6 +80,17 @@ actual object PlatformFunctions {
             onResult(true, null)
         }.onFailure { onResult(false, it.message ?: PICKER_NOT_READY) }
     }
+
+    actual fun formatEpochSecond(epochSecond: Long): String = Instant.ofEpochSecond(epochSecond)
+        .atZone(ZoneId.systemDefault())
+        .format(
+            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+                .withLocale(Locale.getDefault())
+        )
+
+    actual fun currentTimeMillis(): Long = System.currentTimeMillis()
+
+    actual val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 
     // App Helper
 

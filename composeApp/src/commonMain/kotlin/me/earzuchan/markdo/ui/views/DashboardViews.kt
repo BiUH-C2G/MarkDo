@@ -54,6 +54,7 @@ fun RecentItemsSection(state: MoodleService.RecentItemsState, duty: DashboardDut
                 if (state.data.isEmpty()) EmptyBox(Res.string.no_recent_items.t) else Column {
                     state.data.forEach { item ->
                         val itemKey = MoodleTextLocation.key("dashboard", "recent", MoodleTextLocation.seg("item", item.id))
+                        val courseNameKey = MoodleTextLocation.courseName(item.courseId)
 
                         ListItem(
                             {
@@ -68,7 +69,7 @@ fun RecentItemsSection(state: MoodleService.RecentItemsState, duty: DashboardDut
                             supportingContent = {
                                 MoodleText(
                                     item.courseName,
-                                    context = MoodleTextContext("$itemKey/course_name"),
+                                    context = MoodleTextContext(courseNameKey),
                                     style = MaterialTheme.typography.bodySmall,
                                 )
                             },
@@ -95,6 +96,7 @@ fun TimelineSection(state: MoodleService.TimelineState, duty: DashboardDuty) = O
                 if (state.data.isEmpty()) EmptyBox(Res.string.empty_timeline.t) else Column {
                     state.data.forEach { item ->
                         val itemKey = MoodleTextLocation.key("dashboard", "timeline", MoodleTextLocation.seg("event", item.id))
+                        val courseNameKey = MoodleTextLocation.courseName(item.courseId)
 
                         ListItem(
                             {
@@ -109,7 +111,7 @@ fun TimelineSection(state: MoodleService.TimelineState, duty: DashboardDuty) = O
                                 Column {
                                     MoodleText(
                                         item.courseName,
-                                        context = MoodleTextContext("$itemKey/course_name"),
+                                        context = MoodleTextContext(courseNameKey),
                                         style = MaterialTheme.typography.bodySmall,
                                     )
 

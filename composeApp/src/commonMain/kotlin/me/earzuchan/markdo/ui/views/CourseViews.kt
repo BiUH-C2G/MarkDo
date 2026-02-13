@@ -57,13 +57,12 @@ fun AllCoursesPage(duty: CourseDuty) = Scaffold(topBar = {
 
             is MoodleService.CoursesState.Success -> LazyColumn(Modifier.fillMaxSize()) {
                 items(s.data) { course ->
-                    val courseKey = MoodleTextLocation.key("course", "all", MoodleTextLocation.seg("course", course.id))
+                    val courseKey = MoodleTextLocation.course(course.id)
                     ListItem(
                         {
                             MoodleText(
                                 course.name,
                                 context = MoodleTextContext("$courseKey/name"),
-                                onClick = { duty.navCourseDetail(course.id) },
                             )
                         },
                         Modifier.clickable { duty.navCourseDetail(course.id) },
@@ -75,7 +74,6 @@ fun AllCoursesPage(duty: CourseDuty) = Scaffold(topBar = {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                onClick = { duty.navCourseDetail(course.id) },
                             )
                         }
                     )
@@ -94,10 +92,10 @@ fun CourseDetailPage(duty: CourseDetailDuty) {
         TopAppBar({
             when (val s = state) {
                 is CourseDetailDuty.UIState.Success -> {
-                    val courseKey = MoodleTextLocation.key("course", "detail", MoodleTextLocation.seg("course", s.data.id))
+                    val courseKey = MoodleTextLocation.course(s.data.id)
                     MoodleText(
                         rawText = s.data.name,
-                        context = MoodleTextContext("$courseKey/title"),
+                        context = MoodleTextContext("$courseKey/name"),
                         style = MaterialTheme.typography.titleLarge,
                     )
                 }
@@ -209,7 +207,6 @@ fun ResourceView(resource: CourseModule.Resource, moduleKey: String, onClick: (C
         MoodleText(
             resource.name,
             context = MoodleTextContext("$moduleKey/name"),
-            onClick = { onClick(resource) },
         )
     },
     Modifier.clickable { onClick(resource) },
@@ -218,7 +215,6 @@ fun ResourceView(resource: CourseModule.Resource, moduleKey: String, onClick: (C
         if (info.isNotBlank()) MoodleText(
             info,
             context = MoodleTextContext("$moduleKey/info"),
-            onClick = { onClick(resource) },
         )
     },
     leadingContent = { MIcon(Res.drawable.ic_file_24px, MaterialTheme.colorScheme.primary) }, trailingContent = { resource.availability?.let { RestrictionBadge(it) } }
@@ -230,7 +226,6 @@ fun AssignmentView(assign: CourseModule.Assignment, moduleKey: String, onClick: 
         MoodleText(
             assign.name,
             context = MoodleTextContext("$moduleKey/name"),
-            onClick = onClick,
         )
     },
     Modifier.clickable { onClick() },
@@ -242,7 +237,6 @@ fun AssignmentView(assign: CourseModule.Assignment, moduleKey: String, onClick: 
                     it.joinToString("\n"),
                     context = MoodleTextContext("$moduleKey/info"),
                     color = MaterialTheme.colorScheme.error,
-                    onClick = onClick,
                 )
             }
     }
@@ -267,7 +261,6 @@ fun SimpleModuleView(module: CourseModule, icon: DrawableResource, moduleKey: St
         MoodleText(
             module.name,
             context = MoodleTextContext("$moduleKey/name"),
-            onClick = onClick,
         )
     },
     Modifier.clickable { onClick() },
@@ -285,7 +278,6 @@ fun QuizView(quiz: CourseModule.Quiz, moduleKey: String, onClick: () -> Unit) = 
         MoodleText(
             quiz.name,
             context = MoodleTextContext("$moduleKey/name"),
-            onClick = onClick,
         )
     },
     Modifier.clickable { onClick() },
@@ -297,7 +289,6 @@ fun QuizView(quiz: CourseModule.Quiz, moduleKey: String, onClick: () -> Unit) = 
                     it.joinToString("\n"),
                     context = MoodleTextContext("$moduleKey/info"),
                     color = MaterialTheme.colorScheme.error,
-                    onClick = onClick,
                 )
             }
     },
@@ -311,5 +302,5 @@ private fun buildSectionKey(courseId: Int, section: SectionLike): String {
         else -> section.name.hashCode()
     }
 
-    return MoodleTextLocation.key("course", "detail", MoodleTextLocation.seg("course", courseId), MoodleTextLocation.seg("section", sectionId))
+    return MoodleTextLocation.courseSection(courseId, sectionId)
 }

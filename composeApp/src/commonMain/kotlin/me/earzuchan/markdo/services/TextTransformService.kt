@@ -7,6 +7,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import me.earzuchan.markdo.data.models.MoodleTextContext
+import me.earzuchan.markdo.data.models.MoodleTextLocation
 import me.earzuchan.markdo.data.models.TextTransformRule
 import me.earzuchan.markdo.data.models.TextTransformRuleBundle
 import me.earzuchan.markdo.data.models.TextTransformRuleDraft
@@ -14,6 +15,7 @@ import me.earzuchan.markdo.data.models.TextTransformRuleType
 import me.earzuchan.markdo.data.repositories.AppPreferenceRepository
 import me.earzuchan.markdo.data.repositories.TextTransformRepository
 import me.earzuchan.markdo.utils.MiscUtils.ioDispatcherLaunch
+import me.earzuchan.markdo.utils.PlatformFunctions
 
 class TextTransformService(private val repo: TextTransformRepository, private val appPrefsRepo: AppPreferenceRepository) {
     private val json = Json {
@@ -46,7 +48,10 @@ class TextTransformService(private val repo: TextTransformRepository, private va
         if (rawText.isEmpty() || !_enabled.value) return rawText
 
         val enabledRules = _rules.value.filter { it.enabled }
-        val locationRule = enabledRules.firstOrNull { it.type == TextTransformRuleType.LOCATION && it.matcher == context.locationKey }
+        val locationKey = MoodleTextLocation.canonical(context.locationKey)
+        val locationRule = enabledRules.firstOrNull {
+            it.type == TextTransformRuleType.LOCATION && MoodleTextLocation.canonical(it.matcher) == locationKey
+        }
         if (locationRule != null) return locationRule.replacement
 
         var transformed = rawText
@@ -70,18 +75,59 @@ class TextTransformService(private val repo: TextTransformRepository, private va
         return transformed
     }
 
+    fun getEffectiveRules(rawText: String, context: MoodleTextContext): List<TextTransformRule> {
+        if (rawText.isEmpty() || !_enabled.value) return emptyList()
+
+        val enabledRules = _rules.value.filter { it.enabled }
+        val locationKey = MoodleTextLocation.canonical(context.locationKey)
+        val locationRule = enabledRules.firstOrNull {
+            it.type == TextTransformRuleType.LOCATION && MoodleTextLocation.canonical(it.matcher) == locationKey
+        }
+
+        if (locationRule != null) return listOf(locationRule)
+
+        val matchedRules = mutableListOf<TextTransformRule>()
+        var transformed = rawText
+
+        enabledRules.forEach { rule ->
+            when (rule.type) {
+                TextTransformRuleType.KEYWORD -> {
+                    if (rule.matcher.isBlank() || !transformed.contains(rule.matcher, ignoreCase = rule.ignoreCase)) return@forEach
+                    matchedRules += rule
+                    transformed = transformed.replace(rule.matcher, rule.replacement, ignoreCase = rule.ignoreCase)
+                }
+
+                TextTransformRuleType.REGEX -> {
+                    if (rule.matcher.isBlank()) return@forEach
+                    val options = if (rule.ignoreCase) setOf(RegexOption.IGNORE_CASE) else emptySet()
+                    runCatching {
+                        val regex = Regex(rule.matcher, options)
+                        if (!regex.containsMatchIn(transformed)) return@forEach
+                        matchedRules += rule
+                        transformed = regex.replace(transformed, rule.replacement)
+                    }
+                }
+
+                TextTransformRuleType.LOCATION -> Unit
+            }
+        }
+
+        return matchedRules
+    }
+
     suspend fun addRule(draft: TextTransformRuleDraft): TextTransformRule {
         validateDraft(draft)
 
+        val matcher = normalizeMatcher(draft.type, draft.matcher)
         val rule = TextTransformRule(
             id = buildRuleId(),
             type = draft.type,
-            matcher = draft.matcher.trim(),
+            matcher = matcher,
             replacement = draft.replacement,
             ignoreCase = draft.ignoreCase,
             note = draft.note.trim(),
             enabled = true,
-            createdAtEpochMs = System.currentTimeMillis(),
+            createdAtEpochMs = PlatformFunctions.currentTimeMillis(),
         )
 
         repo.upsertRule(rule)
@@ -92,11 +138,12 @@ class TextTransformService(private val repo: TextTransformRepository, private va
         validateDraft(draft)
 
         val current = _rules.value.firstOrNull { it.id == ruleId } ?: return
+        val matcher = normalizeMatcher(draft.type, draft.matcher)
 
         repo.upsertRule(
             current.copy(
                 type = draft.type,
-                matcher = draft.matcher.trim(),
+                matcher = matcher,
                 replacement = draft.replacement,
                 ignoreCase = draft.ignoreCase,
                 note = draft.note.trim(),
@@ -140,5 +187,10 @@ class TextTransformService(private val repo: TextTransformRepository, private va
         }
     }
 
-    private fun buildRuleId(): String = "rule_${System.currentTimeMillis()}_${(1000..9999).random()}"
+    private fun normalizeMatcher(type: TextTransformRuleType, matcher: String): String {
+        val trimmed = matcher.trim()
+        return if (type == TextTransformRuleType.LOCATION) MoodleTextLocation.canonical(trimmed) else trimmed
+    }
+
+    private fun buildRuleId(): String = "rule_${PlatformFunctions.currentTimeMillis()}_${(1000..9999).random()}"
 }

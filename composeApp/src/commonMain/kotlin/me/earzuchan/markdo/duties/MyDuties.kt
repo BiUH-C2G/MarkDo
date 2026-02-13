@@ -11,6 +11,7 @@ import com.arkivanov.decompose.value.Value
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import me.earzuchan.markdo.data.models.SavedLoginAccount
 import me.earzuchan.markdo.data.models.TextTransformRule
 import me.earzuchan.markdo.data.models.TextTransformRuleDraft
@@ -83,11 +84,17 @@ class MyDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent, IC
 
     init {
         ioDispatcherLaunch {
-            userName.value = getString(Res.string.loading_user_name)
-        }
-
-        ioDispatcherLaunch {
-            moodleService.userProfile.collect { it?.let { pf -> userName.value = pf.name } }
+            combine(
+                moodleService.userProfile,
+                moodleService.activeAccountKey,
+                moodleService.rememberedAccounts
+            ) { profile, activeKey, accounts ->
+                profile?.name?.takeIf { it.isNotBlank() }
+                    ?: accounts.firstOrNull { it.accountKey == activeKey }?.username
+                    ?: getString(Res.string.loading_user_name)
+            }.collect { resolved ->
+                userName.value = resolved
+            }
         }
 
         ioDispatcherLaunch {

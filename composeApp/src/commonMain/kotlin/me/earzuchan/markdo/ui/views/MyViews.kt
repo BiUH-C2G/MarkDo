@@ -113,9 +113,8 @@ fun OverviewPage(duty: MyDuty) = Scaffold(topBar = {
     LazyColumn(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(WindowInsets.navigationBars.only(WindowInsetsSides.Top))) {
         item("name") {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                MoodleText(
-                    userName,
-                    context = MoodleTextContext(MoodleTextLocation.key("my", "profile", "name")),
+                Text(
+                    text = userName,
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -459,7 +458,7 @@ fun TextTranslationManagePage(duty: TextTranslationManageDuty) {
             }
         } else LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(rules, key = { it.id }) { rule ->

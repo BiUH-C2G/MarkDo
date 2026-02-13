@@ -11,11 +11,12 @@ pluginManagement {
 
 dependencyResolutionManagement {
     repositories {
+        mavenLocal()
+        maven("https://earzuchan.github.io/Maven/")
         google()
         mavenCentral()
         maven("https://jitpack.io/")
         maven("https://jogamp.org/deployment/maven/")
-        maven("https://earzuchan.github.io/Maven/")
     }
 }
 

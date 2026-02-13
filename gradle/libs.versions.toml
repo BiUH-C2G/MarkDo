@@ -24,7 +24,7 @@ decompose = "3.4.0" # Decompose 版本：我们用最新版，检查更新：htt
 
 koin = "4.1.1" # Koin 版本：我们用最新版，检查更新：https://insert-koin.io/
 
-fetchMoodle = "2026.2.3"
+fetchMoodle = "2026.2.4"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }

@@ -9,7 +9,7 @@ import java.util.Date
 // 版本代码是yyyyMMdd动态生成
 val verCode = SimpleDateFormat("yyyyMMdd").format(Date()).toInt()
 // 当实现计划时记得撞♂版本号
-val verName = "1.1.5"
+val verName = "1.2.1"
 // 包名
 val appId = "me.earzuchan.markdo"
 val appName = "MarkDo"
@@ -39,6 +39,18 @@ kotlin {
     }
 
     jvm()
+
+    val iosTargets = listOf(
+        iosArm64(),
+        iosSimulatorArm64()
+    )
+
+    iosTargets.forEach { target ->
+        target.binaries.framework {
+            baseName = "ComposeApp"
+            isStatic = true
+        }
+    }
 
     sourceSets {
         androidMain.dependencies {
@@ -82,6 +94,8 @@ kotlin {
 dependencies {
     add("kspAndroid", libs.androidx.room.compiler)
     add("kspJvm", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
 }
 
 val generateBuildConstants = tasks.register("generateBuildConstants") {

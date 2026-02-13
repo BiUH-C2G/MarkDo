@@ -20,6 +20,7 @@ import me.earzuchan.markdo.data.models.SavedLoginAccountEntity
 import me.earzuchan.markdo.data.models.TimelineEventCacheEntity
 import me.earzuchan.markdo.data.models.UserProfileCacheEntity
 import me.earzuchan.markdo.data.preferences.AppPreferences
+import me.earzuchan.markdo.utils.PlatformFunctions
 
 class AppPreferenceRepository(private val dataStore: DataStore<Preferences>) {
     fun <T> getPreferenceFlow(key: Preferences.Key<T>, defaultValue: T): Flow<T> = dataStore.data.map { prefs ->
@@ -67,7 +68,7 @@ class AccountRepository(private val accountDao: SavedLoginAccountDao) {
         val normalizedSite = normalizeSite(site)
         val normalizedUsername = username.trim()
         val accountKey = buildAccountKey(normalizedSite, normalizedUsername)
-        val now = System.currentTimeMillis()
+        val now = PlatformFunctions.currentTimeMillis()
 
         val account = SavedLoginAccount(
             accountKey = accountKey,

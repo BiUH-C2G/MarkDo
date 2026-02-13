@@ -20,3 +20,5 @@ node_modules/
 
 composeApp/debug
 composeApp/release
+
+.gradle-home

@@ -13,6 +13,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import me.earzuchan.markdo.duties.DashboardDuty
+import me.earzuchan.markdo.data.models.MoodleTextContext
+import me.earzuchan.markdo.data.models.MoodleTextLocation
 import me.earzuchan.markdo.resources.*
 import me.earzuchan.markdo.services.MoodleService
 import me.earzuchan.markdo.ui.widgets.MIcon
@@ -50,10 +52,27 @@ fun RecentItemsSection(state: MoodleService.RecentItemsState, duty: DashboardDut
 
             is MoodleService.RecentItemsState.Success -> {
                 if (state.data.isEmpty()) EmptyBox(Res.string.no_recent_items.t) else Column {
-                    state.data.forEach {
+                    state.data.forEach { item ->
+                        val itemKey = MoodleTextLocation.key("dashboard", "recent", MoodleTextLocation.seg("item", item.id))
+
                         ListItem(
-                            { Text(it.name, maxLines = 1, overflow = TextOverflow.Ellipsis) }, Modifier.clickable {}, supportingContent = { Text(it.courseName, style = MaterialTheme.typography.bodySmall) },
-                            leadingContent = { TypeIcon(it.type) }
+                            {
+                                MoodleText(
+                                    item.name,
+                                    context = MoodleTextContext("$itemKey/name"),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            },
+                            Modifier.clickable {},
+                            supportingContent = {
+                                MoodleText(
+                                    item.courseName,
+                                    context = MoodleTextContext("$itemKey/course_name"),
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            },
+                            leadingContent = { TypeIcon(item.type) }
                         )
                     }
                 }
@@ -74,19 +93,41 @@ fun TimelineSection(state: MoodleService.TimelineState, duty: DashboardDuty) = O
 
             is MoodleService.TimelineState.Success -> {
                 if (state.data.isEmpty()) EmptyBox(Res.string.empty_timeline.t) else Column {
-                    state.data.forEach {
+                    state.data.forEach { item ->
+                        val itemKey = MoodleTextLocation.key("dashboard", "timeline", MoodleTextLocation.seg("event", item.id))
+
                         ListItem(
-                            { Text(it.name, color = if (it.isOverdue) MaterialTheme.colorScheme.error else Color.Unspecified) }, Modifier.clickable { }, supportingContent = {
+                            {
+                                MoodleText(
+                                    item.name,
+                                    context = MoodleTextContext("$itemKey/name"),
+                                    color = if (item.isOverdue) MaterialTheme.colorScheme.error else Color.Unspecified,
+                                )
+                            },
+                            Modifier.clickable { },
+                            supportingContent = {
                                 Column {
-                                    Text(it.courseName, style = MaterialTheme.typography.bodySmall)
+                                    MoodleText(
+                                        item.courseName,
+                                        context = MoodleTextContext("$itemKey/course_name"),
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
 
                                     Text(
-                                        "${Res.string.due_time.t}${it.deadline.timeStr}",
+                                        "${Res.string.due_time.t}${item.deadline.timeStr}",
                                         style = MaterialTheme.typography.labelMedium,
-                                        color = if (it.isOverdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                                        color = if (item.isOverdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                                     )
                                 }
-                            }, trailingContent = { TextButton({ }) { Text(it.actionName) } }
+                            },
+                            trailingContent = {
+                                TextButton({ }) {
+                                    MoodleText(
+                                        item.actionName,
+                                        context = MoodleTextContext("$itemKey/action_name"),
+                                    )
+                                }
+                            }
                         )
                     }
                 }

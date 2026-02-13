@@ -77,7 +77,7 @@ fun MAlertDialog(
         fun listActions() = actions.forEach { actionItem ->
             TextButton({
                 actionItem.action()
-                onDismissRequest()
+                if (actionItem.finalDismiss) onDismissRequest()
             }, Modifier.only(actionsInColumn) { fillMaxWidth() }.height(40.dp)) {
                 Text(actionItem.text, color = MaterialTheme.colorScheme.primary)
             }

@@ -1,9 +1,15 @@
 package me.earzuchan.markdo.data.repositories
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import lib.fetchmoodle.MoodleCourseInfo
 import lib.fetchmoodle.MoodleRecentItem
 import lib.fetchmoodle.MoodleTimelineEvent
 import lib.fetchmoodle.MoodleUserProfile
+import me.earzuchan.markdo.data.DEFAULT_BASE_SITE
 import me.earzuchan.markdo.data.dao.MoodleCacheDao
 import me.earzuchan.markdo.data.dao.SavedLoginAccountDao
 import me.earzuchan.markdo.data.models.CourseInfoCacheEntity
@@ -15,8 +21,23 @@ import me.earzuchan.markdo.data.models.TimelineEventCacheEntity
 import me.earzuchan.markdo.data.models.UserProfileCacheEntity
 import me.earzuchan.markdo.data.preferences.AppPreferences
 
-class AppPreferenceRepository {
-    fun getDefaultBaseSite(): String = AppPreferences.DEFAULT_BASE_SITE
+class AppPreferenceRepository(private val dataStore: DataStore<Preferences>) {
+    fun <T> getPreferenceFlow(key: Preferences.Key<T>, defaultValue: T): Flow<T> = dataStore.data.map { prefs ->
+        prefs[key] ?: defaultValue
+    }
+
+    suspend fun <T> setPreference(key: Preferences.Key<T>, value: T) {
+        dataStore.edit { prefs -> prefs[key] = value }
+    }
+
+    // SPEC
+
+    fun textTransformEnabledFlow(): Flow<Boolean> = getPreferenceFlow(
+        AppPreferences.KEY_TEXT_TRANSFORM_ENABLED,
+        AppPreferences.DEFAULT_TEXT_TRANSFORM_ENABLED
+    )
+
+    suspend fun setTextTransformEnabled(enabled: Boolean) = setPreference(AppPreferences.KEY_TEXT_TRANSFORM_ENABLED, enabled)
 }
 
 class AccountRepository(private val accountDao: SavedLoginAccountDao) {
@@ -34,7 +55,7 @@ class AccountRepository(private val accountDao: SavedLoginAccountDao) {
         val account = active ?: accounts.maxByOrNull { it.lastLoginEpochMs }
 
         return if (account != null) LoginDraft(account.baseSite, account.username, account.password)
-        else LoginDraft(AppPreferences.DEFAULT_BASE_SITE, "", "")
+        else LoginDraft(DEFAULT_BASE_SITE, "", "")
     }
 
     suspend fun getLoginDraftByAccountKey(accountKey: String): LoginDraft? {

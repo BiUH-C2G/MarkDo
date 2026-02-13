@@ -34,6 +34,10 @@ expect object PlatformFunctions {
 
     fun getAppFilesPath(): File
 
+    fun importTextFromFile(onResult: (content: String?, error: String?) -> Unit)
+
+    fun exportTextToFile(defaultName: String, content: String, onResult: (success: Boolean, error: String?) -> Unit)
+
     // App Helper
     fun setupApp()
 

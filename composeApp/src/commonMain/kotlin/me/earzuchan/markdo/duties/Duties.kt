@@ -2,6 +2,7 @@ package me.earzuchan.markdo.duties
 
 import com.arkivanov.decompose.ComponentContext
 import kotlinx.coroutines.flow.*
+import me.earzuchan.markdo.data.DEFAULT_BASE_SITE
 import me.earzuchan.markdo.data.models.SavedLoginAccount
 import me.earzuchan.markdo.data.preferences.AppPreferences
 import me.earzuchan.markdo.services.MoodleService
@@ -36,7 +37,7 @@ class LoginDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent 
             moodleService.authState.collect {
                 if (it is MoodleService.AuthState.Unauthed) {
                     if (it.reason == MoodleService.AUTH_MSG_USER_LOGOUT) {
-                        baseSite.value = AppPreferences.DEFAULT_BASE_SITE
+                        baseSite.value = DEFAULT_BASE_SITE
                         username.value = ""
                         password.value = ""
                         errorMessage.value = null

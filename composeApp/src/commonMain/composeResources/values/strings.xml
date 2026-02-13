@@ -44,4 +44,61 @@
     <string name="login_status_onlining">登录中</string>
     <string name="login_status_unknown">未知</string>
     <string name="relogin">上线</string>
+    <string name="loading_user_name">加载用户姓名中</string>
+    <string name="grades_load_failed">成绩列表加载失败</string>
+
+    <string name="text_transform_switch">启用文本翻译</string>
+    <string name="text_transform_switch_desc">关闭后不会应用任何翻译规则</string>
+
+    <string name="trans_notice">提示</string>
+    <string name="trans_rule_created">规则已创建</string>
+    <string name="trans_rule_updated">规则已更新</string>
+    <string name="trans_rule_deleted">规则已删除</string>
+    <string name="trans_rule_create_failed">创建规则失败</string>
+    <string name="trans_rule_update_failed">更新规则失败</string>
+    <string name="trans_rule_import_failed">导入失败</string>
+    <string name="trans_rule_import_success">导入成功，共 %1$s 条规则</string>
+    <string name="trans_file_import_failed">文件导入失败</string>
+    <string name="trans_file_export_success">导出成功</string>
+    <string name="trans_file_export_failed">文件导出失败</string>
+    <string name="trans_file_picker_not_ready">文件选择器未就绪</string>
+
+    <string name="trans_rule_type_keyword">关键词替换</string>
+    <string name="trans_rule_type_regex">正则替换</string>
+    <string name="trans_rule_type_location">定位替换</string>
+    <string name="trans_create_rule_from_current">为当前文本创建规则</string>
+    <string name="trans_create_rule">新建规则</string>
+    <string name="trans_edit_rule">编辑规则</string>
+    <string name="trans_rule_type">规则类型</string>
+    <string name="trans_match_keyword">关键词</string>
+    <string name="trans_match_regex">正则表达式</string>
+    <string name="trans_match_location">位置键</string>
+    <string name="trans_current_location">当前位置：%1$s</string>
+    <string name="trans_replacement">替换为</string>
+    <string name="trans_ignore_case">忽略大小写</string>
+    <string name="trans_note_optional">备注（可选）</string>
+    <string name="trans_empty_rules">还没有规则，点击右下角创建</string>
+    <string name="trans_match_preview">匹配：%1$s</string>
+    <string name="trans_replace_preview">替换：%1$s</string>
+    <string name="trans_note_preview">备注：%1$s</string>
+    <string name="edit">编辑</string>
+    <string name="delete">删除</string>
+    <string name="trans_confirm_delete_title">确定删除该规则？</string>
+    <string name="trans_confirm_delete_desc">删除后无法恢复。</string>
+
+    <string name="trans_import_rules">导入规则</string>
+    <string name="trans_import_rules_desc">粘贴规则 JSON（支持 bundle 或规则数组）</string>
+    <string name="trans_import_from_text">从文本导入</string>
+    <string name="trans_import_from_file">从文件导入</string>
+    <string name="trans_paste">粘贴</string>
+    <string name="trans_clipboard_empty">剪贴板暂无可用文本</string>
+    <string name="trans_import_overwrite_title">覆盖导入确认</string>
+    <string name="trans_import_overwrite_desc">导入会覆盖当前所有规则，是否继续？</string>
+    <string name="trans_confirm_import_overwrite">覆盖导入</string>
+
+    <string name="trans_export_rules">导出规则</string>
+    <string name="trans_export_to_file">导出到本地</string>
+    <string name="trans_export_to_text">导出为文本</string>
+    <string name="trans_copy">复制</string>
+    <string name="trans_export_default_file_name">markdo_text_rules.json</string>
 </resources>

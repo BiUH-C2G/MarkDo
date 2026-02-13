@@ -48,6 +48,14 @@ actual object PlatformFunctions {
 
     actual fun getAppFilesPath(): File = AndroidApp.appContext.filesDir // 在 /data/data/包名/files/ 下
 
+    actual fun importTextFromFile(onResult: (content: String?, error: String?) -> Unit) {
+        AndroidFilePickerBridge.requestImport(onResult)
+    }
+
+    actual fun exportTextToFile(defaultName: String, content: String, onResult: (success: Boolean, error: String?) -> Unit) {
+        AndroidFilePickerBridge.requestExport(defaultName, content, onResult)
+    }
+
     // App Helper
 
     actual fun setupApp() {}

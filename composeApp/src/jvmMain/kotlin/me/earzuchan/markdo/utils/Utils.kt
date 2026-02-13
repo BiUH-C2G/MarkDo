@@ -4,6 +4,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import me.earzuchan.markdo.data.APP_DATABASE_NAME
 import me.earzuchan.markdo.data.databases.AppDatabase
+import java.awt.FileDialog
+import java.awt.Frame
 import java.io.File
 import javax.swing.SwingUtilities
 
@@ -31,6 +33,7 @@ actual object MarkDoLog {
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual object PlatformFunctions {
     private const val TAG = "DesktopPlatformFunctions"
+    private const val PICKER_NOT_READY = "picker_not_ready"
 
     // Data
 
@@ -43,6 +46,33 @@ actual object PlatformFunctions {
     actual fun getAppFilesPath(): File = File(getAppDataPath(), "files").also { it.mkdirs() }
 
     private fun getAppDataPath(): File = File(System.getProperty("user.home"), "me.earzuchan.markdo")
+
+    actual fun importTextFromFile(onResult: (content: String?, error: String?) -> Unit) {
+        runCatching {
+            val picker = FileDialog(null as Frame?, "Import Rules File", FileDialog.LOAD).apply {
+                file = "*.json"
+                isVisible = true
+            }
+
+            val selected = picker.file ?: return onResult(null, null)
+            val chosen = File(picker.directory, selected)
+            onResult(chosen.readText(), null)
+        }.onFailure { onResult(null, it.message ?: PICKER_NOT_READY) }
+    }
+
+    actual fun exportTextToFile(defaultName: String, content: String, onResult: (success: Boolean, error: String?) -> Unit) {
+        runCatching {
+            val picker = FileDialog(null as Frame?, "Export Rules File", FileDialog.SAVE).apply {
+                file = defaultName
+                isVisible = true
+            }
+
+            val selected = picker.file ?: return onResult(false, null)
+            val chosen = File(picker.directory, selected)
+            chosen.writeText(content)
+            onResult(true, null)
+        }.onFailure { onResult(false, it.message ?: PICKER_NOT_READY) }
+    }
 
     // App Helper
 

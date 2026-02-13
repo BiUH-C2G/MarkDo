@@ -14,7 +14,7 @@ composeMultiplatform = "1.10.1"
 
 kotlin = "2.3.10"
 kotlinx-coroutines = "1.10.2"
-kotlinx-serialization-json = "1.9.0"
+kotlinx-serialization-json = "1.10.0"
 ksp = "2.3.5"
 room = "2.8.4" # Room 版本：我们用稳定版，检查更新：https://developer.android.google.cn/jetpack/androidx/releases/room
 dataStore = "1.2.0" # DataStore 版本：我们用稳定版，检查更新：https://developer.android.google.cn/jetpack/androidx/releases/datastore
@@ -24,7 +24,7 @@ decompose = "3.4.0" # Decompose 版本：我们用最新版，检查更新：htt
 
 koin = "4.1.1" # Koin 版本：我们用最新版，检查更新：https://insert-koin.io/
 
-fetchMoodle = "2026.2.2"
+fetchMoodle = "2026.2.3"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
@@ -44,7 +44,7 @@ androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled" }
 decompose = { group = "com.arkivanov.decompose", name = "decompose", version.ref = "decompose" }
 decomposeExtCmp = { group = "com.arkivanov.decompose", name = "extensions-compose", version.ref = "decompose" }
 
-fetchMoodle = { module = "lib.fetchmoodle:FetchMoodle", version.ref = "fetchMoodle" }
+fetchMoodle = { module = "lib.fetchmoodle:core", version.ref = "fetchMoodle" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

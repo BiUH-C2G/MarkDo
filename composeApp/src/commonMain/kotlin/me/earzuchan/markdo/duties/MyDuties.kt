@@ -10,12 +10,28 @@ import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import me.earzuchan.markdo.data.models.SavedLoginAccount
+import me.earzuchan.markdo.data.models.TextTransformRule
+import me.earzuchan.markdo.data.models.TextTransformRuleDraft
+import me.earzuchan.markdo.data.repositories.AppPreferenceRepository
 import lib.fetchmoodle.MoodleCourseGrade
 import lib.fetchmoodle.MoodleFetcher
 import lib.fetchmoodle.MoodleResult
+import me.earzuchan.markdo.resources.Res
+import me.earzuchan.markdo.resources.grades_load_failed
+import me.earzuchan.markdo.resources.loading_user_name
+import me.earzuchan.markdo.resources.trans_rule_create_failed
+import me.earzuchan.markdo.resources.trans_rule_created
+import me.earzuchan.markdo.resources.trans_rule_deleted
+import me.earzuchan.markdo.resources.trans_rule_import_failed
+import me.earzuchan.markdo.resources.trans_rule_import_success
+import me.earzuchan.markdo.resources.trans_rule_update_failed
+import me.earzuchan.markdo.resources.trans_rule_updated
 import me.earzuchan.markdo.services.MoodleService
+import me.earzuchan.markdo.services.TextTransformService
 import me.earzuchan.markdo.utils.MiscUtils.ioDispatcherLaunch
+import org.jetbrains.compose.resources.getString
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.getValue
@@ -59,13 +75,17 @@ class MyDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent, IC
         }
     }
 
-    val userName = MutableStateFlow("加载用户姓名中")
+    val userName = MutableStateFlow("")
     val rememberedAccounts = MutableStateFlow<List<SavedLoginAccount>>(emptyList())
     val activeAccountKey = MutableStateFlow<String?>(null)
     val switchingAccount = MutableStateFlow(false)
     val loginConnectionState = moodleService.loginConnectionState
 
     init {
+        ioDispatcherLaunch {
+            userName.value = getString(Res.string.loading_user_name)
+        }
+
         ioDispatcherLaunch {
             moodleService.userProfile.collect { it?.let { pf -> userName.value = pf.name } }
         }
@@ -95,6 +115,8 @@ class MyDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent, IC
     private fun mapDuties(navi: MyNavis, subCtx: ComponentContext): ComponentContext = when (navi) {
         is MyNavis.Overview -> this
 
+        is MyNavis.TransMan -> TextTranslationManageDuty(subCtx) { navBack() }
+
         is MyNavis.Grades -> GradesDuty(subCtx) { navBack() }
 
         is MyNavis.Settings -> SettingsDuty(subCtx) { navBack() }
@@ -103,6 +125,8 @@ class MyDuty(ctx: ComponentContext) : ComponentContext by ctx, KoinComponent, IC
     fun navBack() = navigation.replaceAll(MyNavis.Overview)
 
     fun navGrades() = navigation.bringToFront(MyNavis.Grades)
+
+    fun navTransMan() = navigation.bringToFront(MyNavis.TransMan)
 
     fun navSettings() = navigation.bringToFront(MyNavis.Settings)
 }
@@ -129,11 +153,85 @@ class GradesDuty(ctx: ComponentContext, val navBack: () -> Unit) : ComponentCont
 
             when (val result = moodleFetcher.getGrades()) {
                 is MoodleResult.Success -> _state.value = UIState.Success(result.data)
-                is MoodleResult.Failure -> _state.value = UIState.Error(result.exception.message ?: "成绩列表加载失败")
+                is MoodleResult.Failure -> _state.value = UIState.Error(result.exception.message ?: getString(Res.string.grades_load_failed))
             }
         }
     }
 }
 
 class SettingsDuty(ctx: ComponentContext, val navBack: () -> Unit) : ComponentContext by ctx, KoinComponent {
+    private val appPrefsRepo: AppPreferenceRepository by inject()
+
+    val textTransformEnabled = MutableStateFlow(true)
+
+    init {
+        ioDispatcherLaunch {
+            appPrefsRepo.textTransformEnabledFlow().collect { textTransformEnabled.value = it }
+        }
+    }
+
+    fun setTextTransformEnabled(enabled: Boolean) = ioDispatcherLaunch {
+        appPrefsRepo.setTextTransformEnabled(enabled)
+    }
+}
+
+class TextTranslationManageDuty(ctx: ComponentContext, val navBack: () -> Unit) : ComponentContext by ctx, KoinComponent {
+    private val textTransformService: TextTransformService by inject()
+
+    val rules = textTransformService.rules
+
+    private val _exportedJson = MutableStateFlow<String?>(null)
+    val exportedJson = _exportedJson.asStateFlow()
+
+    private val _notice = MutableStateFlow<String?>(null)
+    val notice = _notice.asStateFlow()
+
+    fun clearNotice() {
+        _notice.value = null
+    }
+
+    fun showNotice(msg: String) {
+        _notice.value = msg
+    }
+
+    fun clearExportedJson() {
+        _exportedJson.value = null
+    }
+
+    fun createRule(draft: TextTransformRuleDraft) = ioDispatcherLaunch {
+        runCatching { textTransformService.addRule(draft) }.onSuccess {
+            _notice.value = getString(Res.string.trans_rule_created)
+        }.onFailure {
+            _notice.value = getString(Res.string.trans_rule_create_failed)
+        }
+    }
+
+    fun updateRule(ruleId: String, draft: TextTransformRuleDraft) = ioDispatcherLaunch {
+        runCatching { textTransformService.updateRule(ruleId, draft) }.onSuccess {
+            _notice.value = getString(Res.string.trans_rule_updated)
+        }.onFailure {
+            _notice.value = getString(Res.string.trans_rule_update_failed)
+        }
+    }
+
+    fun setRuleEnabled(rule: TextTransformRule, enabled: Boolean) = ioDispatcherLaunch {
+        textTransformService.setRuleEnabled(rule.id, enabled)
+    }
+
+    fun deleteRule(ruleId: String) = ioDispatcherLaunch {
+        textTransformService.deleteRule(ruleId)
+        _notice.value = getString(Res.string.trans_rule_deleted)
+    }
+
+    fun exportRules() = ioDispatcherLaunch {
+        _exportedJson.value = textTransformService.exportRulesJson()
+    }
+
+    fun importRules(json: String) = ioDispatcherLaunch {
+        runCatching { textTransformService.importRulesJson(json) }.onSuccess { count ->
+            _notice.value = getString(Res.string.trans_rule_import_success, count.toString())
+        }.onFailure {
+            _notice.value = getString(Res.string.trans_rule_import_failed)
+        }
+    }
 }

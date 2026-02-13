@@ -42,6 +42,9 @@ sealed class MyNavis {
     data object Overview : MyNavis()
 
     @Serializable
+    data object TransMan : MyNavis()
+
+    @Serializable
     data object Settings : MyNavis()
 
     @Serializable
